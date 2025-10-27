@@ -212,7 +212,8 @@
             const tabContents = document.querySelectorAll('.tab-content');
             
             tabButtons.forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
                     const targetTab = this.getAttribute('data-tab');
                     
                     // Remove active states
@@ -221,9 +222,17 @@
                     
                     // Add active states
                     this.parentElement.classList.add('is-active');
-                    document.getElementById(targetTab).classList.add('is-active');
+                    const targetContent = document.getElementById(targetTab);
+                    if (targetContent) {
+                        targetContent.classList.add('is-active');
+                    }
                 });
             });
+            
+            // Ensure first tab is active on load
+            if (tabButtons.length > 0) {
+                tabButtons[0].click();
+            }
         });
     </script>
     <style>
@@ -332,15 +341,36 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        .credential-item strong {
+            color: #333333 !important;
+            min-width: 90px;
+            font-weight: 600;
         }
         .credential-value {
-            background: var(--color-accent-default);
-            color: white;
-            padding: 0.25rem 0.75rem;
+            background: #0066cc !important;
+            color: #ffffff !important;
+            padding: 0.5rem 1rem;
             border-radius: 4px;
-            font-family: monospace;
-            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
             font-weight: bold;
+            border: 2px solid #004499;
+            display: inline-block;
+            user-select: all;
+            -webkit-user-select: all;
+            -moz-user-select: all;
+            -ms-user-select: all;
+            text-shadow: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .credential-value:focus {
+            outline: 2px solid #66aaff;
+            background: #004499 !important;
         }
         .security-note {
             margin-top: 1rem;
