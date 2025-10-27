@@ -60,24 +60,63 @@
                     </ul>
                     
                     <div class="tab-content is-active" id="dynatrace">
-                        <p><strong>Dynatrace</strong> provides full-stack monitoring and AI-powered observability. You can log in using your tenant credentials. Our installation provides comprehensive monitoring for business events and application performance.</p>
+                        <div class="service-info">
+                            <h3>🔍 Dynatrace Observability Platform</h3>
+                            <p><strong>Dynatrace</strong> provides full-stack monitoring and AI-powered observability. You can log in using your tenant credentials. Our installation provides comprehensive monitoring for business events and application performance.</p>
+                            
+                            <h4>Quick Access Links</h4>
+                            <ul class="link-list">
+                                <li><a href="{{ dynatrace_tenant_url | default('https://your-tenant.live.dynatrace.com') }}" target="_blank" rel="noreferrer">🌐 Open Dynatrace Tenant</a></li>
+                                <li><a href="{{ dynatrace_tenant_url | default('https://your-tenant.live.dynatrace.com') }}/ui/business-events" target="_blank" rel="noreferrer">📊 Business Events Dashboard</a></li>
+                                <li><a href="{{ dynatrace_tenant_url | default('https://your-tenant.live.dynatrace.com') }}/ui/apps-and-microservices" target="_blank" rel="noreferrer">🏗️ Services & Applications</a></li>
+                                <li><a href="{{ dynatrace_tenant_url | default('https://your-tenant.live.dynatrace.com') }}/ui/dashboards" target="_blank" rel="noreferrer">📈 Custom Dashboards</a></li>
+                            </ul>
+                        </div>
                     </div>
                     <div class="tab-content" id="bizobs">
-                        <p><strong>BizObs Application</strong> is our business observability demo platform. It showcases customer journey tracking, multi-persona traffic generation, and real-time business analytics. Access the application to explore demo scenarios.</p>
+                        <div class="service-info">
+                            <h3>🏪 BizObs Demo Application</h3>
+                            <p><strong>BizObs Application</strong> is our business observability demo platform. It showcases customer journey tracking, multi-persona traffic generation, and real-time business analytics. Access the application to explore demo scenarios.</p>
+                            
+                            <h4>Application Access</h4>
+                            <ul class="link-list">
+                                <li><a href="https://bizobs.{{ ingress_domain }}/" target="_blank" rel="noreferrer">🏠 Main Application</a></li>
+                                <li><a href="https://bizobs.{{ ingress_domain }}/health" target="_blank" rel="noreferrer">❤️ Health Check</a></li>
+                                <li><a href="https://bizobs.{{ ingress_domain }}/api/admin/services/status" target="_blank" rel="noreferrer">⚙️ Admin Dashboard</a></li>
+                                <li><a href="https://bizobs.{{ ingress_domain }}/lab-guide" target="_blank" rel="noreferrer">📚 Lab Guide</a></li>
+                            </ul>
+                            
+                            <h4>Demo Features</h4>
+                            <ul class="link-list">
+                                <li><a href="https://bizobs.{{ ingress_domain }}/api/journey-simulation/simulate-journey" target="_blank" rel="noreferrer">🚶 Customer Journey Simulation</a></li>
+                                <li><a href="https://bizobs.{{ ingress_domain }}/api/load-gen/start" target="_blank" rel="noreferrer">🔄 Load Generation</a></li>
+                                <li><a href="https://bizobs.{{ ingress_domain }}/api/metrics" target="_blank" rel="noreferrer">📊 Metrics API</a></li>
+                            </ul>
+                        </div>
                     </div>
                     <div class="tab-content" id="mattermost">
-                        <p><strong>Mattermost</strong> is our team collaboration platform. You can use it for demo coordination, sharing insights, and communicating during the business observability demonstrations.</p>
-                        <div class="alert alert--info" style="margin-top: 1rem;">
-                            <h4>Default Login Credentials</h4>
-                            <dl class="definition-list" style="margin: 0.5rem 0;">
-                                <dt><strong>Username:</strong></dt>
-                                <dd><code>admin</code></dd>
-                                <dt><strong>Password:</strong></dt>
-                                <dd><code>admin123</code></dd>
-                            </dl>
-                            <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--color-text-secondary);">
-                                <em>Note: These are default credentials for demo purposes. Change them for production use.</em>
-                            </p>
+                        <div class="service-info">
+                            <h3>💬 Mattermost Collaboration</h3>
+                            <p><strong>Mattermost</strong> is our team collaboration platform. You can use it for demo coordination, sharing insights, and communicating during the business observability demonstrations.</p>
+                            
+                            <div class="credential-box">
+                                <h4>🔐 Login Credentials</h4>
+                                <div class="credential-item">
+                                    <strong>Username:</strong> <code class="credential-value">admin</code>
+                                </div>
+                                <div class="credential-item">
+                                    <strong>Password:</strong> <code class="credential-value">admin123</code>
+                                </div>
+                                <p class="security-note">
+                                    <em>⚠️ Note: These are default credentials for demo purposes. Change them for production use.</em>
+                                </p>
+                            </div>
+                            
+                            <h4>Quick Access</h4>
+                            <ul class="link-list">
+                                <li><a href="https://mattermost.{{ ingress_domain }}/" target="_blank" rel="noreferrer">🌐 Open Mattermost</a></li>
+                                <li><a href="https://mattermost.{{ ingress_domain }}/login" target="_blank" rel="noreferrer">🔑 Direct Login</a></li>
+                            </ul>
                         </div>
                     </div>
                     
@@ -193,34 +232,121 @@
             list-style: none;
             padding: 0;
             margin: 2rem 0 1rem 0;
-            border-bottom: 1px solid var(--color-border-default);
+            border-bottom: 2px solid var(--color-border-default);
+            background: var(--color-background-subtle);
+            border-radius: 8px 8px 0 0;
+            padding: 0.5rem;
         }
         .tab-nav__item {
-            margin-right: 2rem;
+            margin-right: 0.5rem;
         }
         .tab-nav__link {
             background: transparent;
             border: none;
-            padding: 0.75rem 0;
+            padding: 1rem 1.5rem;
             cursor: pointer;
-            border-bottom: 2px solid transparent;
+            border-radius: 6px;
             color: var(--color-text-secondary);
             font-size: 1rem;
+            font-weight: 500;
             text-decoration: none;
+            transition: all 0.2s ease;
+            display: block;
+            min-width: 140px;
+            text-align: center;
+        }
+        .tab-nav__link:hover {
+            background: var(--color-background-surface);
+            color: var(--color-text-primary);
         }
         .tab-nav__item.is-active .tab-nav__link {
-            color: var(--color-text-primary);
-            border-bottom-color: var(--color-accent-default);
+            background: var(--color-accent-default);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .tab-content {
             display: none;
-            padding: 1.5rem 0;
+            padding: 2rem;
+            background: var(--color-background-surface);
+            border: 1px solid var(--color-border-default);
+            border-radius: 0 0 8px 8px;
+            border-top: none;
+            min-height: 300px;
         }
         .tab-content.is-active {
             display: block;
         }
         .page-content {
             min-height: 500px;
+        }
+        .service-info h3 {
+            margin-top: 0;
+            color: var(--color-text-primary);
+            border-bottom: 2px solid var(--color-accent-default);
+            padding-bottom: 0.5rem;
+        }
+        .service-info h4 {
+            color: var(--color-text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .link-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .link-list li {
+            margin-bottom: 0.5rem;
+        }
+        .link-list a {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--color-background-subtle);
+            border: 1px solid var(--color-border-default);
+            border-radius: 4px;
+            text-decoration: none;
+            color: var(--color-text-primary);
+            transition: all 0.2s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .link-list a:hover {
+            background: var(--color-accent-subtle);
+            border-color: var(--color-accent-default);
+            transform: translateY(-1px);
+        }
+        .credential-box {
+            background: var(--color-background-subtle);
+            border: 2px solid var(--color-accent-default);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .credential-box h4 {
+            margin-top: 0;
+            color: var(--color-accent-default);
+        }
+        .credential-item {
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .credential-value {
+            background: var(--color-accent-default);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        .security-note {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--color-text-secondary);
+            font-style: italic;
         }
     </style>
 </body>

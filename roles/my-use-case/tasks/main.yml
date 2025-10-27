@@ -1,4 +1,4 @@
-#
+﻿#
 # Partner PowerUp BizObs - Clean ACE-BOX Role
 #
 
@@ -83,6 +83,9 @@
     force: yes
   become_user: "{{ ace_box_user | default('dt_training') }}"
 
+# Use the comprehensive startup script from the app repository
+# This avoids duplication and uses the battle-tested 501-line script
+
 - name: Start Partner PowerUp BizObs with existing comprehensive script (async)
   shell: |
     cd {{ bizobs_app_dir }}
@@ -151,102 +154,17 @@
 - include_role:
     name: "mattermost"
 
-# Configure Dashboard with OneAgent compatibility - SIMPLIFIED APPROACH
-- name: Configure Dashboard with BizObs links and OneAgent compatibility
-  block:
-    # Create the HTML content ConfigMap  
-    - name: Generate ACE-Box styled dashboard content
-      template:
-        src: dashboard-groundhog.html.j2
-        dest: /tmp/dashboard-groundhog.html
-      delegate_to: localhost
-      
-    - name: Create dashboard ConfigMap with proper ACE-Box styling
-      kubernetes.core.k8s:
-        definition:
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: dashboard-content-groundhog
-            namespace: ace
-          data:
-            index.html: "{{ lookup('file', '/tmp/dashboard-groundhog.html') }}"
-        state: present
-    
-    # Set up dashboard values files
-    - set_fact:
-        include_dashboard_value_file: "{{ role_path }}/templates/bizobs-dashboard.yml.j2"
-
-    - include_role:
-        name: dashboard
-        tasks_from: template-values-file
-
-    # Deploy with OneAgent-compatible nginx image
-    - name: Deploy OneAgent-compatible dashboard
-      kubernetes.core.k8s:
-        definition:
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: dashboard
-            namespace: ace
-            labels:
-              app: dashboard
-          spec:
-            replicas: 1
-            selector:
-              matchLabels:
-                app: dashboard
-            template:
-              metadata:
-                labels:
-                  app: dashboard
-                annotations:
-                  oneagent.dynatrace.com/injection: "false"
-                  dynatrace.com/inject: "false"
-                  dynatrace/process-group: "false"
-              spec:
-                containers:
-                - name: nginx
-                  image: nginx:alpine
-                  ports:
-                  - containerPort: 80
-                  volumeMounts:
-                  - name: dashboard-content
-                    mountPath: /usr/share/nginx/html
-                volumes:
-                - name: dashboard-content
-                  configMap:
-                    name: dashboard-content-groundhog
-        state: present
-        
-    - name: Ensure dashboard service exists
-      kubernetes.core.k8s:
-        definition:
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: dashboard
-            namespace: ace
-          spec:
-            selector:
-              app: dashboard
-            ports:
-            - port: 80
-              targetPort: 80
-              protocol: TCP
-        state: present
-        
-    # Clean up temp file
-    - name: Clean up temporary dashboard template file
-      file:
-        path: /tmp/dashboard-groundhog.html
-        state: absent
-      delegate_to: localhost
-      failed_when: false
+- name: Verify Kubernetes resources were created
+  ansible.builtin.debug:
+    msg: |
+      Service Created: {{ bizobs_service_result is succeeded }}
+      Endpoints Created: {{ bizobs_endpoints_result is succeeded }}
+      Ingress Created: {{ bizobs_ingress_result is succeeded }}
+      Target IP: {{ ansible_default_ipv4.address }}
+      External URL: http://{{ bizobs_domain }}/
 
 # External access for BizObs application - ACE-BOX standard pattern
-- name: Create BizObs service and endpoints
+- name: Create BizObs service and endpoints first
   kubernetes.core.k8s:
     definition:
       apiVersion: v1
@@ -265,6 +183,7 @@
           protocol: TCP
           name: http
     state: present
+  register: bizobs_service_result
 
 - name: Create BizObs endpoints pointing to node localhost
   kubernetes.core.k8s:
@@ -285,6 +204,18 @@
           protocol: TCP
           name: http
     state: present
+  register: bizobs_endpoints_result
+
+- name: Wait for service to be ready
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Service
+    name: bizobs-service
+    namespace: default
+  register: service_info
+  until: service_info.resources | length > 0
+  retries: 10
+  delay: 3
 
 - name: Create BizObs ingress for external access
   kubernetes.core.k8s:
@@ -315,16 +246,58 @@
                   port:
                     number: 8080
     state: present
+  register: bizobs_ingress_result
+  retries: 3
+  delay: 5
+
+- name: Verify Kubernetes resources were created
+  ansible.builtin.debug:
+    msg: |
+      Service Created: {{ bizobs_service_result is succeeded }}
+      Endpoints Created: {{ bizobs_endpoints_result is succeeded }}
+      Ingress Created: {{ bizobs_ingress_result is succeeded }}
+      Target IP: {{ ansible_default_ipv4.address }}
+      External URL: http://{{ bizobs_domain }}/
+
+# Configure Dashboard LAST with proper ACE-BOX role
+- name: Configure Dashboard with BizObs links
+  block:
+    - set_fact:
+        include_dashboard_value_file: "{{ role_path }}/templates/bizobs-dashboard.yml.j2"
+
+    - include_role:
+        name: dashboard
+        tasks_from: template-values-file
+
+    - include_role:
+        name: "dashboard"
+
+- name: Verify Kubernetes resources were created
+  ansible.builtin.debug:
+    msg: |
+      Service Created: {{ bizobs_service_result is succeeded }}
+      Endpoints Created: {{ bizobs_endpoints_result is succeeded }}
+      Ingress Created: {{ bizobs_ingress_result is succeeded }}
+      Target IP: {{ ansible_default_ipv4.address }}
+      External URL: http://{{ bizobs_domain }}/
 
 - name: Final deployment status
   ansible.builtin.debug:
     msg: |
       🎉 Partner PowerUp BizObs deployed successfully with ACE-BOX standards!
       
+      � Deployment Order Completed:
+      1. ✅ Dynatrace OneAgent & Monaco Config
+      2. ✅ BizObs Application (verified healthy)
+      3. ✅ Mattermost Collaboration
+      4. ✅ Kubernetes Service & Ingress
+      5. ✅ Dashboard (with all service links)
+      
       🔗 Access URLs:
+      - Dashboard: http://dashboard.{{ ingress_domain }}/ (📊 Central hub with all links)
       - BizObs App: http://{{ bizobs_domain }}/
-      - Dashboard: http://dashboard.{{ ingress_domain }}/
       - Mattermost: http://mattermost.{{ ingress_domain }}/
+      - Dynatrace: {{ extra_vars.dt_environment_url_gen3.rstrip('/') }}
       
       🎯 BizObs Features Ready:
       - Customer Journey Simulation: http://{{ bizobs_domain }}/api/journey-simulation/simulate-journey
@@ -332,4 +305,21 @@
       - Health Check: http://{{ bizobs_domain }}/health
       - Load Generation: Multi-persona simulation (Karen, Raj, Alex, Sophia)
       
+      🎭 Demo Scenarios:
+      - Insurance: PolicyDiscovery → QuoteGeneration → PaymentProcessing
+      - Retail: ProductBrowsing → CartManagement → CheckoutProcess
+      - Tech: UserOnboarding → FeatureExploration → DataProcessing
+      - Banking: AccountCreation → KYCVerification → TransactionProcessing
+      
       🚀 Ready for Dynatrace Business Observability demos!
+      
+      ✅ ACE-BOX Deployment Summary:
+      - Health Check: {{ health_check.status }}
+      - Service Created: {{ bizobs_service_result is succeeded }}
+      - Endpoints Created: {{ bizobs_endpoints_result is succeeded }}
+      - Ingress Created: {{ bizobs_ingress_result is succeeded }}
+      - Dashboard: Available with all service links
+      - Ingress Class: {{ ingress_class | default('public') }} (ACE-BOX standard)
+      - Automation: Fully automated - no manual steps required!
+      
+      💡 Note: Dashboard deployed last to include all service URLs
