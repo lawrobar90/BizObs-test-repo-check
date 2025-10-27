@@ -8,6 +8,8 @@
     bizobs_repo_url: "https://github.com/lawrobar90/Partner-PowerUp-BizObs-App.git"
     bizobs_app_dir: "/home/{{ ace_box_user | default('dt_training') }}/Partner-PowerUp-BizObs-App"
     bizobs_domain: "bizobs.{{ ingress_domain }}"
+    # Set Dynatrace tenant URL from common ACE-Box variables
+    dynatrace_tenant_url: "{{ dynatrace_tenant_url | default(extra_vars.dt_environment_url_gen3 | default(dt_environment_url | default('https://lkv40420.apps.dynatrace.com'))) | regex_replace('/$', '') }}"
 
 - include_role:
     name: dt-access-token
@@ -166,17 +168,15 @@
 
 - name: Extract Mattermost credentials
   set_fact:
-    mattermost_username: "{{ mattermost_secret.resources[0].data.mattermost_username | b64decode if mattermost_secret.resources else 'admin' }}"
-    mattermost_password: "{{ mattermost_secret.resources[0].data.mattermost_password | b64decode if mattermost_secret.resources else 'admin123' }}"
-    dynatrace_tenant_url: "{{ extra_vars.dt_environment_url_gen3.rstrip('/') }}"
-  when: mattermost_secret.resources is defined and mattermost_secret.resources | length > 0
+    mattermost_username: "{{ (mattermost_secret.resources[0].data.mattermost_username | b64decode) if (mattermost_secret.resources and mattermost_secret.resources | length > 0) else 'admin' }}"
+    mattermost_password: "{{ (mattermost_secret.resources[0].data.mattermost_password | b64decode) if (mattermost_secret.resources and mattermost_secret.resources | length > 0) else 'admin123' }}"
 
-- name: Set fallback credentials if secret not found
-  set_fact:
-    mattermost_username: "admin"
-    mattermost_password: "admin123"
-    dynatrace_tenant_url: "{{ extra_vars.dt_environment_url_gen3.rstrip('/') }}"
-  when: mattermost_secret.resources is not defined or mattermost_secret.resources | length == 0
+- name: Debug credentials for verification
+  ansible.builtin.debug:
+    msg: |
+      Mattermost Username: '{{ mattermost_username }}'
+      Mattermost Password: '{{ mattermost_password }}'
+      Dynatrace URL: '{{ dynatrace_tenant_url }}'
 
 - name: Verify Kubernetes resources were created
   ansible.builtin.debug:
