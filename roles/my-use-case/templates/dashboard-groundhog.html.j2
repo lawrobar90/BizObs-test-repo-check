@@ -268,10 +268,12 @@
             list-style: none;
             padding: 0;
             margin: 2rem 0 1rem 0;
-            border-bottom: 2px solid var(--color-border-default);
-            background: var(--color-background-subtle);
+            border-bottom: 2px solid #e0e0e0;
+            background: #f8f9fa;
             border-radius: 8px 8px 0 0;
             padding: 0.5rem;
+            min-height: 60px;
+            align-items: center;
         }
         .tab-nav__item {
             margin-right: 0.5rem;
@@ -282,7 +284,7 @@
             padding: 1rem 1.5rem;
             cursor: pointer;
             border-radius: 6px;
-            color: var(--color-text-secondary);
+            color: #666666 !important;
             font-size: 1rem;
             font-weight: 500;
             text-decoration: none;
@@ -292,20 +294,24 @@
             text-align: center;
         }
         .tab-nav__link:hover {
-            background: var(--color-background-surface);
-            color: var(--color-text-primary);
+            background: #f8f9fa !important;
+            color: #333333 !important;
         }
         .tab-nav__item.is-active .tab-nav__link {
-            background: var(--color-accent-default);
-            color: white;
+            background: #0066cc !important;
+            color: #ffffff !important;
             font-weight: 600;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tab-nav__item.is-active .tab-nav__link:hover {
+            background: #0052a3 !important;
+            color: #ffffff !important;
         }
         .tab-content {
             display: none !important;
             padding: 2rem;
-            background: var(--color-background-surface);
-            border: 1px solid var(--color-border-default);
+            background: #ffffff !important;
+            border: 1px solid #e0e0e0;
             border-radius: 0 0 8px 8px;
             border-top: none;
             min-height: 300px;
@@ -314,10 +320,11 @@
         }
         .tab-content.is-active {
             display: block !important;
-            opacity: 1;
+            opacity: 1 !important;
         }
         .tab-content[style*="display: block"] {
             display: block !important;
+            opacity: 1 !important;
         }
         .page-content {
             min-height: 500px;
