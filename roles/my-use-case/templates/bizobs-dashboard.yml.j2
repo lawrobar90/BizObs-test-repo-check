@@ -1,0 +1,45 @@
+---
+#
+# useCases
+#
+# Allows to provide links to use case specific guides.
+# All links will be added to the bottom of the dashboard's homepage (i.e. "Home")
+#
+# In addition, use case specific previews can be added and grouped by "section".
+# These preview URLs will be available on the dashboard's preview page (i.e. "Deployment Preview").
+# Preview URLs will be refreshed every 10 seconds.
+#
+useCases:
+  partner-powerup-bizobs:
+    previews:
+    - section: Partner PowerUp BizObs
+      description: Main Application
+      url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}"
+    - section: Partner PowerUp BizObs
+      description: Health Check
+      url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/health"
+    - section: Partner PowerUp BizObs
+      description: Admin Panel
+      url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/api/admin/services/status"
+    guides:
+    - description: "Partner PowerUp BizObs - Business Analytics Lab Guide"
+      url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/lab-guide"
+
+#
+# extRefs
+#
+# Allows to provide references to external tools. Description will be added to the dashboard's homepage.
+#
+# References can optionally contain credentials. Credentials will be added to the dashboard's "Links" page.
+# Credentials itself can be of type "text" or "password". Values of "password" credentials are hidden in the UI.
+#
+extRefs:
+  "Partner PowerUp BizObs":
+    description: "Partner PowerUp Business Observability Customer Journey Simulator - Main Application"
+    url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}"
+  "BizObs Health & Metrics":
+    description: "Application health check and performance metrics"
+    url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/health"
+  "BizObs Admin Panel":
+    description: "Administrative interface for service status and configuration"
+    url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/api/admin/services/status"

@@ -1,0 +1,335 @@
+#
+# Partner PowerUp BizObs - Clean ACE-BOX Role
+#
+
+---
+- set_fact:
+    role_path_abs: "{{ role_path }}"
+    bizobs_repo_url: "https://github.com/lawrobar90/Partner-PowerUp-BizObs-App.git"
+    bizobs_app_dir: "/home/{{ ace_box_user | default('dt_training') }}/Partner-PowerUp-BizObs-App"
+    bizobs_domain: "bizobs.{{ ingress_domain }}"
+
+- include_role:
+    name: dt-access-token
+  vars:
+    access_token_var_name: "monaco_cleanup_api_token"
+    access_token_scope: ["ReadConfig", "WriteConfig", "events.ingest", "settings.read", "settings.write", "metrics.ingest", "openTelemetryTrace.ingest", "logs.ingest"]
+
+- include_role:
+    name: "microk8s"
+
+# Install Node.js via ACE-BOX role for startup script compatibility
+- name: Install Node.js via ACE-BOX role
+  block:
+    - include_role:
+        name: "nodejs"
+      vars:
+        nodejs_node_version: "v18.20.1"
+  rescue:
+    - name: Verify Node.js is available despite YARN failure
+      ansible.builtin.shell: |
+        . ~/.nvm/nvm.sh && node --version
+      args:
+        executable: /bin/bash
+      become_user: "{{ ace_box_user | default('dt_training') }}"
+      register: node_version_result
+      
+    - name: Log Node.js status
+      ansible.builtin.debug:
+        msg: "Node.js available: {{ node_version_result.stdout }} (YARN installation failed but not required for BizObs)"
+
+    - name: Ensure Node.js is in PATH for current session
+      ansible.builtin.shell: |
+        echo 'export PATH="$HOME/.nvm/versions/node/v18.20.1/bin:$PATH"' >> ~/.bashrc
+        . ~/.bashrc
+      become_user: "{{ ace_box_user | default('dt_training') }}"
+      failed_when: false
+
+# Install OneAgent BEFORE app for proper instrumentation
+- include_role:
+    name: "dt-oneagent-classic"
+
+# Deploy Monaco configuration BEFORE app starts
+- include_role:
+    name: "monaco-v2"
+
+- include_role:
+    name: monaco-v2
+    tasks_from: apply-monaco
+    apply:
+      environment:
+        DT_API_TOKEN: "{{ dynatrace_api_token }}"
+        DT_PLATFORM_TENANT_URL: "{{ extra_vars.dt_environment_url_gen3.rstrip('/') }}"
+        DT_OAUTH_CLIENT_ID: "{{ extra_vars.dt_oauth_client_id }}"
+        DT_OAUTH_CLIENT_SECRET: "{{ extra_vars.dt_oauth_client_secret }}"
+        DT_OAUTH_SSO_ENDPOINT: "{{ extra_vars.dt_oauth_sso_endpoint }}"
+        INGRESS_DOMAIN: "{{ ingress_domain }}"
+  vars:
+    monaco_projects_root: "{{ role_path_abs }}/files/monaco"
+    monaco_project: "" # selection of projects or all projects under the root path if set empty
+    monaco_manifest_path: "{{ role_path_abs }}/files/monaco/manifest.yml"
+    monaco_environment:
+      DT_API_TOKEN: "{{ dynatrace_api_token }}"
+      DT_PLATFORM_TENANT_URL: "{{ extra_vars.dt_environment_url_gen3.rstrip('/') }}"
+      DT_OAUTH_CLIENT_ID: "{{ extra_vars.dt_oauth_client_id }}"
+      DT_OAUTH_CLIENT_SECRET: "{{ extra_vars.dt_oauth_client_secret }}"
+      DT_OAUTH_SSO_ENDPOINT: "{{ extra_vars.dt_oauth_sso_endpoint }}"
+
+- name: Clone repository
+  ansible.builtin.git:
+    repo: "{{ bizobs_repo_url }}"
+    dest: "{{ bizobs_app_dir }}"
+    version: "main"
+    force: yes
+  become_user: "{{ ace_box_user | default('dt_training') }}"
+
+- name: Start Partner PowerUp BizObs with existing comprehensive script (async)
+  shell: |
+    cd {{ bizobs_app_dir }}
+    chmod +x start-server.sh
+    nohup ./start-server.sh --ace-box-id="{{ ace_box_id | default('ace-box-demo') }}" --external-url="http://{{ bizobs_domain }}" > /tmp/bizobs-startup.log 2>&1 &
+    echo "Started BizObs application in background"
+  environment:
+    ACE_BOX_ID: "{{ ace_box_id | default('ace-box-demo') }}"
+    BIZOBS_EXTERNAL_URL: "http://{{ bizobs_domain }}"
+    COMPANY_NAME: "{{ company_name | default('Dynatrace') }}"
+    COMPANY_DOMAIN: "{{ company_domain | default('dynatrace.com') }}"
+    INDUSTRY_TYPE: "{{ industry_type | default('technology') }}"
+    EXTERNAL_URL_OVERRIDE: "http://{{ bizobs_domain }}"
+  args:
+    chdir: "{{ bizobs_app_dir }}"
+  become_user: "{{ ace_box_user | default('dt_training') }}"
+
+- name: Wait for startup
+  ansible.builtin.wait_for:
+    port: 8080
+    host: localhost
+    timeout: 300
+    delay: 30
+
+- name: Check startup log for success
+  shell: |
+    if [ -f /tmp/bizobs-startup.log ]; then
+      tail -50 /tmp/bizobs-startup.log
+    else
+      echo "Startup log not found"
+    fi
+  register: startup_log
+  
+- name: Display startup status
+  ansible.builtin.debug:
+    msg: "BizObs startup log: {{ startup_log.stdout }}"
+
+- name: Verify application health
+  ansible.builtin.uri:
+    url: "http://localhost:8080/health"
+    method: GET
+    status_code: 200
+  register: health_check
+  retries: 5
+  delay: 10
+  until: health_check is succeeded
+
+- name: Verify admin services status
+  ansible.builtin.uri:
+    url: "http://localhost:8080/api/admin/services/status"
+    method: GET
+    status_code: 200
+  register: admin_status
+  retries: 3
+  delay: 5
+  failed_when: false
+
+- name: Log health check results
+  ansible.builtin.debug:
+    msg: |
+      Health Check: {{ health_check.status }}
+      Admin Status: {{ admin_status.status | default('Failed') }}
+      BizObs Application Ready: {{ health_check is succeeded }}
+
+# Deploy collaboration tools AFTER app is verified working
+- include_role:
+    name: "mattermost"
+
+# Configure Dashboard with OneAgent compatibility - SIMPLIFIED APPROACH
+- name: Configure Dashboard with BizObs links and OneAgent compatibility
+  block:
+    # Create the HTML content ConfigMap  
+    - name: Generate ACE-Box styled dashboard content
+      template:
+        src: dashboard-groundhog.html.j2
+        dest: /tmp/dashboard-groundhog.html
+      delegate_to: localhost
+      
+    - name: Create dashboard ConfigMap with proper ACE-Box styling
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: dashboard-content-groundhog
+            namespace: ace
+          data:
+            index.html: "{{ lookup('file', '/tmp/dashboard-groundhog.html') }}"
+        state: present
+    
+    # Set up dashboard values files
+    - set_fact:
+        include_dashboard_value_file: "{{ role_path }}/templates/bizobs-dashboard.yml.j2"
+
+    - include_role:
+        name: dashboard
+        tasks_from: template-values-file
+
+    # Deploy with OneAgent-compatible nginx image
+    - name: Deploy OneAgent-compatible dashboard
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: dashboard
+            namespace: ace
+            labels:
+              app: dashboard
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: dashboard
+            template:
+              metadata:
+                labels:
+                  app: dashboard
+                annotations:
+                  oneagent.dynatrace.com/injection: "false"
+                  dynatrace.com/inject: "false"
+                  dynatrace/process-group: "false"
+              spec:
+                containers:
+                - name: nginx
+                  image: nginx:alpine
+                  ports:
+                  - containerPort: 80
+                  volumeMounts:
+                  - name: dashboard-content
+                    mountPath: /usr/share/nginx/html
+                volumes:
+                - name: dashboard-content
+                  configMap:
+                    name: dashboard-content-groundhog
+        state: present
+        
+    - name: Ensure dashboard service exists
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: dashboard
+            namespace: ace
+          spec:
+            selector:
+              app: dashboard
+            ports:
+            - port: 80
+              targetPort: 80
+              protocol: TCP
+        state: present
+        
+    # Clean up temp file
+    - name: Clean up temporary dashboard template file
+      file:
+        path: /tmp/dashboard-groundhog.html
+        state: absent
+      delegate_to: localhost
+      failed_when: false
+
+# External access for BizObs application - ACE-BOX standard pattern
+- name: Create BizObs service and endpoints
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: bizobs-service
+        namespace: default
+        labels:
+          app: bizobs
+          component: partner-powerup
+      spec:
+        type: ClusterIP
+        ports:
+        - port: 8080
+          targetPort: 8080
+          protocol: TCP
+          name: http
+    state: present
+
+- name: Create BizObs endpoints pointing to node localhost
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Endpoints
+      metadata:
+        name: bizobs-service
+        namespace: default
+        labels:
+          app: bizobs
+          component: partner-powerup
+      subsets:
+      - addresses:
+        - ip: "{{ ansible_default_ipv4.address }}"
+        ports:
+        - port: 8080
+          protocol: TCP
+          name: http
+    state: present
+
+- name: Create BizObs ingress for external access
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: bizobs-ingress
+        namespace: default
+        labels:
+          app: bizobs
+          component: partner-powerup
+        annotations:
+          nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+          nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+          nginx.ingress.kubernetes.io/rewrite-target: /
+      spec:
+        ingressClassName: "{{ ingress_class | default('public') }}"
+        rules:
+        - host: "{{ bizobs_domain }}"
+          http:
+            paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: bizobs-service
+                  port:
+                    number: 8080
+    state: present
+
+- name: Final deployment status
+  ansible.builtin.debug:
+    msg: |
+      🎉 Partner PowerUp BizObs deployed successfully with ACE-BOX standards!
+      
+      🔗 Access URLs:
+      - BizObs App: http://{{ bizobs_domain }}/
+      - Dashboard: http://dashboard.{{ ingress_domain }}/
+      - Mattermost: http://mattermost.{{ ingress_domain }}/
+      
+      🎯 BizObs Features Ready:
+      - Customer Journey Simulation: http://{{ bizobs_domain }}/api/journey-simulation/simulate-journey
+      - Admin Panel: http://{{ bizobs_domain }}/api/admin/services/status
+      - Health Check: http://{{ bizobs_domain }}/health
+      - Load Generation: Multi-persona simulation (Karen, Raj, Alex, Sophia)
+      
+      🚀 Ready for Dynatrace Business Observability demos!

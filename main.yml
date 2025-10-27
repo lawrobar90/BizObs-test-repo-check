@@ -1,0 +1,11 @@
+#
+# Partner PowerUp BizObs - ACE-BOX Use Case (Role-based Pattern)
+# Command: ace enable https://github.com/YOUR_USERNAME/ace-box-ext-hot-partner-powerup-bizobs.git
+#
+
+---
+- debug:
+    msg: "🚀 ACE-BOX: Deploying Partner PowerUp BizObs (Role-based)"
+
+- include_role:
+    name: my-use-case

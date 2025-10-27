@@ -1,0 +1,47 @@
+configs:
+  - id: SENSOR_DOTNET_BIZEVENTS_HTTP_INCOMING
+    config:
+      name: name
+      template: SENSOR_DOTNET_BIZEVENTS_HTTP_INCOMING.json
+      skip: false
+    type:
+      settings:
+        schema: builtin:oneagent.features
+        scope: environment
+
+  - id: SENSOR_JAVA_BIZEVENTS_HTTP_INCOMING
+    config:
+      name: name
+      template: SENSOR_JAVA_BIZEVENTS_HTTP_INCOMING.json
+      skip: false
+    type:
+      settings:
+        schema: builtin:oneagent.features
+        scope: environment
+
+  - id: SENSOR_NODEJS_BIZEVENTS_HTTP_INCOMING
+    config:
+      name: name
+      template: SENSOR_NODEJS_BIZEVENTS_HTTP_INCOMING.json
+      skip: false
+    type:
+      settings:
+        schema: builtin:oneagent.features
+        scope: environment
+
+ # - id: holistic-api-service-naming
+#    config:
+#      name: "Holistic API Rules"
+#      template: service-naming-rule.json
+#      skip: false
+#    type:
+ #     api: service-naming-rule
+
+  - id: bizobstemplate
+    type:
+      openpipeline:
+        kind: bizevents
+    config:
+      name: Revenue
+      template: bizobstemplate.json
+      skip: false
