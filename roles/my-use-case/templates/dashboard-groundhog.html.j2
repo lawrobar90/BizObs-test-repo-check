@@ -67,6 +67,18 @@
                     </div>
                     <div class="tab-content" id="mattermost">
                         <p><strong>Mattermost</strong> is our team collaboration platform. You can use it for demo coordination, sharing insights, and communicating during the business observability demonstrations.</p>
+                        <div class="alert alert--info" style="margin-top: 1rem;">
+                            <h4>Default Login Credentials</h4>
+                            <dl class="definition-list" style="margin: 0.5rem 0;">
+                                <dt><strong>Username:</strong></dt>
+                                <dd><code>admin</code></dd>
+                                <dt><strong>Password:</strong></dt>
+                                <dd><code>admin123</code></dd>
+                            </dl>
+                            <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--color-text-secondary);">
+                                <em>Note: These are default credentials for demo purposes. Change them for production use.</em>
+                            </p>
+                        </div>
                     </div>
                     
                     <h2>Use Cases</h2>
@@ -110,7 +122,12 @@
                         <dd><a href="https://bizobs.{{ ingress_domain }}/" target="_blank" rel="noreferrer">Business Observability demo application</a></dd>
                         
                         <dt>Mattermost</dt>
-                        <dd><a href="https://mattermost.{{ ingress_domain }}/" target="_blank" rel="noreferrer">Team collaboration platform</a></dd>
+                        <dd>
+                            <a href="https://mattermost.{{ ingress_domain }}/" target="_blank" rel="noreferrer">Team collaboration platform</a>
+                            <div style="margin-top: 0.5rem; padding: 0.5rem; background-color: var(--color-background-subtle); border-radius: 4px;">
+                                <small><strong>Login:</strong> admin / admin123</small>
+                            </div>
+                        </dd>
                     </dl>
                     
                     <h2>Demo Resources</h2>
