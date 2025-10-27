@@ -102,13 +102,13 @@
                             <div class="credential-box">
                                 <h4>🔐 Login Credentials</h4>
                                 <div class="credential-item">
-                                    <strong>Username:</strong> <code class="credential-value">admin</code>
+                                    <strong>Username:</strong> <code class="credential-value">{{ mattermost_username | default('admin') }}</code>
                                 </div>
                                 <div class="credential-item">
-                                    <strong>Password:</strong> <code class="credential-value">admin123</code>
+                                    <strong>Password:</strong> <code class="credential-value">{{ mattermost_password | default('admin123') }}</code>
                                 </div>
                                 <p class="security-note">
-                                    <em>⚠️ Note: These are default credentials for demo purposes. Change them for production use.</em>
+                                    <em>⚠️ Note: These are the actual deployed credentials for your Mattermost instance.</em>
                                 </p>
                             </div>
                             
@@ -155,7 +155,7 @@
                     <h2>Core Services</h2>
                     <dl class="definition-list">
                         <dt>Dynatrace Environment</dt>
-                        <dd><a href="{{ dynatrace_tenant_url }}" target="_blank" rel="noreferrer">Access your Dynatrace tenant</a></dd>
+                        <dd><a href="{{ dynatrace_tenant_url | default('https://your-tenant.live.dynatrace.com') }}" target="_blank" rel="noreferrer">Access your Dynatrace tenant</a></dd>
                         
                         <dt>BizObs Application</dt>
                         <dd><a href="https://bizobs.{{ ingress_domain }}/" target="_blank" rel="noreferrer">Business Observability demo application</a></dd>
@@ -164,7 +164,7 @@
                         <dd>
                             <a href="https://mattermost.{{ ingress_domain }}/" target="_blank" rel="noreferrer">Team collaboration platform</a>
                             <div style="margin-top: 0.5rem; padding: 0.5rem; background-color: var(--color-background-subtle); border-radius: 4px;">
-                                <small><strong>Login:</strong> admin / admin123</small>
+                                <small><strong>Login:</strong> {{ mattermost_username | default('admin') }} / {{ mattermost_password | default('admin123') }}</small>
                             </div>
                         </dd>
                     </dl>
