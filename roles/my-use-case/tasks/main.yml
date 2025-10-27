@@ -154,6 +154,43 @@
 - include_role:
     name: "mattermost"
 
+# Fix Mattermost ingress configuration for proper public access
+- name: Fix Mattermost ingress service name and configuration
+  block:
+    - name: Update Mattermost ingress to point to correct service
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: mattermost-mattermost-team-edition
+            namespace: mattermost
+            annotations:
+              kubernetes.io/ingress.class: public
+              nginx.ingress.kubernetes.io/proxy-body-size: "0"
+              nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+              nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+              nginx.ingress.kubernetes.io/ssl-redirect: "false"
+          spec:
+            ingressClassName: "public"
+            rules:
+            - host: "mattermost.{{ ingress_domain }}"
+              http:
+                paths:
+                - path: /
+                  pathType: ImplementationSpecific
+                  backend:
+                    service:
+                      name: mattermost-team-edition
+                      port:
+                        number: 8065
+        state: present
+      register: mattermost_ingress_result
+      
+    - name: Log Mattermost ingress fix
+      ansible.builtin.debug:
+        msg: "Mattermost ingress fixed: {{ mattermost_ingress_result is succeeded }}"
+
 - name: Verify Kubernetes resources were created
   ansible.builtin.debug:
     msg: |
@@ -336,3 +373,20 @@
       - Automation: Fully automated - no manual steps required!
       
       💡 Note: Dashboard deployed last to include all service URLs
+
+# Configure public access for dashboard and services
+- name: Configure public access for all services
+  block:
+    - name: Remove dashboard basic authentication for public access
+      shell: |
+        kubectl patch ingress dashboard -n ace --type='json' -p='[
+          {"op": "remove", "path": "/metadata/annotations/nginx.ingress.kubernetes.io~1auth-realm"},
+          {"op": "remove", "path": "/metadata/annotations/nginx.ingress.kubernetes.io~1auth-secret"},
+          {"op": "remove", "path": "/metadata/annotations/nginx.ingress.kubernetes.io~1auth-type"}
+        ]' || true
+      register: dashboard_auth_removal
+      failed_when: false
+      
+    - name: Log dashboard authentication removal
+      ansible.builtin.debug:
+        msg: "Dashboard authentication removed for public access: {{ dashboard_auth_removal.rc == 0 }}"
