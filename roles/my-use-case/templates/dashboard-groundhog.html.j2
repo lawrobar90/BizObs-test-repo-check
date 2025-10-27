@@ -84,13 +84,6 @@
                                 <li><a href="https://bizobs.{{ ingress_domain }}/api/admin/services/status" target="_blank" rel="noreferrer">⚙️ Admin Dashboard</a></li>
                                 <li><a href="https://bizobs.{{ ingress_domain }}/lab-guide" target="_blank" rel="noreferrer">📚 Lab Guide</a></li>
                             </ul>
-                            
-                            <h4>Demo Features</h4>
-                            <ul class="link-list">
-                                <li><a href="https://bizobs.{{ ingress_domain }}/api/journey-simulation/simulate-journey" target="_blank" rel="noreferrer">🚶 Customer Journey Simulation</a></li>
-                                <li><a href="https://bizobs.{{ ingress_domain }}/api/load-gen/start" target="_blank" rel="noreferrer">🔄 Load Generation</a></li>
-                                <li><a href="https://bizobs.{{ ingress_domain }}/api/metrics" target="_blank" rel="noreferrer">📊 Metrics API</a></li>
-                            </ul>
                         </div>
                     </div>
                     <div class="tab-content" id="mattermost">
@@ -119,13 +112,6 @@
                         </div>
                     </div>
                     
-                    <h2>Use Cases</h2>
-                    <p>The following list shows use cases currently supported by ACE Box. Please follow links for step-by-step instructions.</p>
-                    
-                    <dl class="definition-list">
-                        <dt>Partner PowerUp BizObs</dt>
-                        <dd><a href="https://bizobs.{{ ingress_domain }}/lab-guide" target="_blank" rel="noreferrer">Step-by-step instructions</a></dd>
-                    </dl>
                 </div>
                 
                 <!-- Deployment Preview Page -->
@@ -166,18 +152,6 @@
                                 <small><strong>Login:</strong> {{ mattermost_username | default('admin') }} / {{ mattermost_password | default('admin123') }}</small>
                             </div>
                         </dd>
-                    </dl>
-                    
-                    <h2>Demo Resources</h2>
-                    <dl class="definition-list">
-                        <dt>Lab Guide</dt>
-                        <dd><a href="https://bizobs.{{ ingress_domain }}/lab-guide" target="_blank" rel="noreferrer">Interactive lab guide and documentation</a></dd>
-                        
-                        <dt>Journey Simulation</dt>
-                        <dd><a href="https://bizobs.{{ ingress_domain }}/api/journey-simulation/simulate-journey" target="_blank" rel="noreferrer">Execute customer journey simulations</a></dd>
-                        
-                        <dt>Load Generation</dt>
-                        <dd><a href="https://bizobs.{{ ingress_domain }}/api/load-gen/start" target="_blank" rel="noreferrer">Generate synthetic traffic</a></dd>
                     </dl>
                 </div>
             </div>
