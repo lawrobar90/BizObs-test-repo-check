@@ -21,9 +21,19 @@ useCases:
     - section: Partner PowerUp BizObs
       description: Admin Panel
       url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/api/admin/services/status"
+    - section: Partner PowerUp BizObs
+      description: Journey Simulation
+      url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/api/journey-simulation/simulate-journey"
+    - section: Partner PowerUp BizObs
+      description: Load Generation
+      url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/api/load-gen/start"
     guides:
     - description: "Partner PowerUp BizObs - Business Analytics Lab Guide"
       url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/lab-guide"
+    - description: "Partner PowerUp BizObs GitHub Repository"
+      url: "https://github.com/lawrobar90/ace-box-ext-hot-partner-powerup-bizobs"
+    - description: "Partner PowerUp BizObs Application README"
+      url: "https://github.com/lawrobar90/ace-box-ext-hot-partner-powerup-bizobs/blob/main/README.md"
 
 #
 # extRefs
@@ -37,9 +47,25 @@ extRefs:
   "Partner PowerUp BizObs":
     description: "Partner PowerUp Business Observability Customer Journey Simulator - Main Application"
     url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}"
+  "BizObs API Documentation":
+    description: "REST API endpoints for customer journey simulation and business analytics"
+    url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/api"
+  "BizObs Customer Journey Steps":
+    description: "Interactive customer journey process steps simulation"
+    url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/process"
   "BizObs Health & Metrics":
     description: "Application health check and performance metrics"
     url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/health"
   "BizObs Admin Panel":
     description: "Administrative interface for service status and configuration"
     url: "{{ ingress_protocol | default('http') }}://bizobs.{{ ingress_domain }}/api/admin/services/status"
+  "Mattermost Team Collaboration":
+    description: "Team collaboration platform for Dynatrace demos and discussions"
+    url: "{{ ingress_protocol | default('http') }}://mattermost.{{ ingress_domain }}"
+    credentials:
+    - type: "text"
+      name: "Username"
+      value: "{{ mattermost_admin_username | default('admin') }}"
+    - type: "password"
+      name: "Password"
+      value: "{{ mattermost_admin_password | default('Dynatrace1!') }}"
