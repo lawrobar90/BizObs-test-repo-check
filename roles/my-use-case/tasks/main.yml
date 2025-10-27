@@ -260,17 +260,30 @@
       External URL: http://{{ bizobs_domain }}/
 
 # Configure Dashboard LAST with proper ACE-BOX role
-- name: Configure Dashboard with BizObs links
+- name: Configure Dashboard with BizObs links and OneAgent compatibility
   block:
-    - set_fact:
-        include_dashboard_value_file: "{{ role_path }}/templates/bizobs-dashboard.yml.j2"
-
-    - include_role:
-        name: dashboard
-        tasks_from: template-values-file
-
-    - include_role:
-        name: "dashboard"
+    # Fetch dynamic Mattermost credentials from Kubernetes secrets
+    - name: Get Mattermost credentials from Kubernetes secrets
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        name: mattermost-admin
+        namespace: mattermost
+      register: mattermost_secret_info
+      failed_when: false
+    
+    - name: Set Mattermost credentials from secrets
+      set_fact:
+        mattermost_username: "{{ mattermost_secret_info.resources[0].data.mattermost_username | b64decode if mattermost_secret_info.resources else 'admin' }}"
+        mattermost_password: "{{ mattermost_secret_info.resources[0].data.mattermost_password | b64decode if mattermost_secret_info.resources else 'admin123' }}"
+      when: mattermost_secret_info.resources is defined and mattermost_secret_info.resources | length > 0
+    
+    # First create the HTML content ConfigMap  
+    - name: Generate Dynatrace Groundhog styled dashboard content
+      template:
+        src: dashboard-groundhog.html.j2
+        dest: /tmp/dashboard-groundhog.html
+      delegate_to: localhost
 
 - name: Verify Kubernetes resources were created
   ansible.builtin.debug:
